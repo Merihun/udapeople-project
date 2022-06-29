@@ -61,6 +61,25 @@ commands:
               npm install
               npm run migration:revert
             fi
+
+  write-env-variables:
+    description: Writes environment variables to env file
+    steps:
+      - run:
+          name: Add env vars to .env file
+          command: |
+            ls -la
+            echo ENVIRONMENT=$ENVIRONMENT > "./backend/.env"
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "./backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "./backend/.env"
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> "./backend/.env"
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "./backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "./backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "./backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "./backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "./backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "./backend/.env"
+
 jobs:
   build-frontend:
     docker:
@@ -210,6 +229,7 @@ jobs:
             echo "Ansible inventories >> Requires for the next job"
             apk add openssh-client
             pip3 install awscli
+      - write-env-variables
       - run:
           name: Configure Server
           no_output_timeout: 15m
