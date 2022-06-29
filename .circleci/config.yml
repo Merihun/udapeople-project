@@ -208,18 +208,14 @@ jobs:
 
   configure-infrastructure:
     docker:
-      # - image: cimg/base:stable
       - image: python:3.7-alpine3.11
     steps:
       - checkout
-      # - install_awscli
-      # - install_ansible
-      - install_nodejs
+      # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints: ["1d:b4:d2:cc:c8:a2:8c:98:91:67:8b:86:2c:1b:bf:51"]
       - attach_workspace:
           at: ~/
-      # bellow install dependencies added new
       - run:
           name: Install dependencies
           command: |
@@ -231,14 +227,56 @@ jobs:
             pip3 install awscli
       - write-env-variables
       - run:
-          name: Configure Server
+          name: Configure server
           no_output_timeout: 15m
           command: |
-            cd .circleci/ansible
-            cat inventory.txt
+            echo "Print directory"
+            ls -la
+            # ls ~/project/.circleci/ansible/roles/deploy/files/
+            cd ~/project/backend
             ansible-galaxy install weareinteractive.environment
-            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.txt configure-server.yml
-      - destroy-environment
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/configure-server.yml
+      - run:
+          name: Install AWS CLI for rollback
+          when: on_fail
+          command: |
+            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
+
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+  # configure-infrastructure:
+  #   docker:
+  #     # - image: cimg/base:stable
+  #     - image: python:3.7-alpine3.11
+  #   steps:
+  #     - checkout
+  #     # - install_awscli
+  #     # - install_ansible
+  #     - install_nodejs
+  #     - add_ssh_keys:
+  #         fingerprints: ["1d:b4:d2:cc:c8:a2:8c:98:91:67:8b:86:2c:1b:bf:51"]
+  #     - attach_workspace:
+  #         at: ~/
+  #     # bellow install dependencies added new
+  #     - run:
+  #         name: Install dependencies
+  #         command: |
+  #           apk add curl
+  #           apk add --upgrade bash
+  #           apk add --update ansible
+  #           echo "Ansible inventories >> Requires for the next job"
+  #           apk add openssh-client
+  #           pip3 install awscli
+  #     - write-env-variables
+  #     - run:
+  #         name: Configure Server
+  #         no_output_timeout: 15m
+  #         command: |
+  #           cd .circleci/ansible
+  #           cat inventory.txt
+  #           ansible-galaxy install weareinteractive.environment
+  #           ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.txt configure-server.yml
+  #     - destroy-environment
 
   run-migrations:
     docker:
