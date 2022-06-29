@@ -189,22 +189,35 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: cimg/base:stable
+      # - image: cimg/base:stable
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
-      - install_awscli
-      - install_ansible
+      # - install_awscli
+      # - install_ansible
       - add_ssh_keys:
           fingerprints: ["1d:b4:d2:cc:c8:a2:8c:98:91:67:8b:86:2c:1b:bf:51"]
       - attach_workspace:
           at: ~/
+      # bellow install dependencies added new
+      - run:
+          name: Install dependencies
+          command: |
+            apk add curl
+            apk add --upgrade bash
+            apk add --update ansible
+            echo "Ansible inventories >> Requires for the next job"
+            apk add openssh-client
+            pip3 install awscli
       - run:
           name: Configure Server
+          no_output_timeout: 15m
           command: |
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment
+
   run-migrations:
     docker:
       - image: cimg/node:13.8.0
